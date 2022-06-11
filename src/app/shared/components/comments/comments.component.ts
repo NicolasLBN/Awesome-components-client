@@ -11,7 +11,7 @@ export class CommentsComponent implements OnInit {
   @Input() comments!: Comment[];
   @Output() newComment = new EventEmitter<string>();
 
-
+  tempDate = new Date();
   commentCtrl!: FormControl;
 
   constructor(private formBuilder: FormBuilder) { }
