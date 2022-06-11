@@ -9,10 +9,13 @@ import { Post } from '../../models/post.model';
 export class PostListItemComponent implements OnInit {
 
   @Input() post!: Post;
-  
+
   constructor() { }
 
   ngOnInit(): void {
   }
 
+  onNewComment(comment: string) {
+    console.log(comment)
+  }
 }
