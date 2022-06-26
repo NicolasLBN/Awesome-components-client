@@ -3,6 +3,8 @@ import { AbstractControl, FormBuilder, FormControl, FormGroup, Validators } from
 import { Observable } from 'rxjs';
 import { map, startWith, tap } from 'rxjs/operators';
 import { ComplexFormService } from '../../services/complex-form.service';
+import { confirmEqualValidator } from '../../validators/confirm-equal.validator';
+import { validValidator } from '../../validators/valid.validator';
 
 @Component({
   selector: 'app-complex-form',
@@ -25,6 +27,8 @@ export class ComplexFormComponent implements OnInit {
 
   showEmailCtrl$!: Observable<boolean>;
   showPhoneCtrl$!: Observable<boolean>;
+  showEmailError$!: Observable<boolean>;
+  showPasswordError$!: Observable<boolean>
 
   constructor(private formBuilder: FormBuilder, 
               private complexFormService: ComplexFormService) { }
@@ -47,6 +51,9 @@ export class ComplexFormComponent implements OnInit {
     this.emailForm = this.formBuilder.group({
       email: this.emailCtrl,
       confirm: this.confirmEmailCtrl
+    }, {
+      validators: [confirmEqualValidator('email', 'confirm')],
+      updateOn: 'blur'
     });
     this.passwordCtrl = this.formBuilder.control('', Validators.required);
     this.confirmPasswordCtrl = this.formBuilder.control('', Validators.required);
@@ -54,6 +61,8 @@ export class ComplexFormComponent implements OnInit {
       username: ['', Validators.required],
       password: this.passwordCtrl,
       confirmPassword: this.confirmPasswordCtrl
+    }, {
+      validators: [confirmEqualValidator('password', 'confirmPassword')]
     });
   }
 
@@ -78,13 +87,27 @@ export class ComplexFormComponent implements OnInit {
       map(preference => preference === 'phone'),
       tap(showPhoneCtrl => this.setPhoneValidators(showPhoneCtrl))
     );
+    this.showEmailError$ = this.emailForm.statusChanges.pipe(
+      map(status => status === 'INVALID' &&
+                  this.emailCtrl.value &&
+                  this.confirmEmailCtrl.value
+    )
+    )
+    this.showPasswordError$ = this.loginInfoForm.statusChanges.pipe(
+      map(status => status === 'INVALID' &&
+                    this.passwordCtrl.value &&
+                    this.confirmPasswordCtrl.value &&
+                    this.loginInfoForm.hasError('confirmEqual')
+      )
+  );
   }
 
   private setEmailValidators(showEmailCtrl: boolean) {
     if (showEmailCtrl) {
       this.emailCtrl.setValidators([
         Validators.required,
-        Validators.email
+        Validators.email,
+        validValidator()
       ]);
       this.confirmEmailCtrl.setValidators([
         Validators.required,
@@ -135,8 +158,10 @@ export class ComplexFormComponent implements OnInit {
       return 'Ce numéro de téléphone ne contient pas assez de chiffres';
     } else if (ctrl.hasError('maxlength')) {
       return 'Ce numéro de téléphone contient trop de chiffres';
+    } else if (ctrl.hasError('validValidator')) {
+      return 'Cette addresse ne contient pas le mot VALID';
     } else {
       return 'Ce champ contient une erreur';
-    }
+    }     
   }
 }
